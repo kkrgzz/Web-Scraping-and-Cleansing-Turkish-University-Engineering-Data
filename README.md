@@ -25,6 +25,11 @@ Data presented in the table.
 &emsp;Necessary data is listed below:
 - University Informations
   - Name of the University
+  - Language of Department
+  - Years of Department
+  - Is Department Secondary Education
+  - Type of Scholarship
+  - Is Department Distance Learning
   - Web Link of University
   - YÖK ID of University
 - Current Student Information
