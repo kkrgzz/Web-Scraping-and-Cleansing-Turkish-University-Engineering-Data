@@ -2,12 +2,21 @@ from bs4 import BeautifulSoup
 import requests
 import pandas as pd
 import os
+import departments as dp
+import time
+
+start_time = time.time()
 
 exist = "https://yokatlas.yok.gov.tr/content/lisans-dynamic/2010.php?y="
 graduate = "https://yokatlas.yok.gov.tr/content/lisans-dynamic/2030.php?y="
 instructor = "https://yokatlas.yok.gov.tr/content/lisans-dynamic/2050.php?y="
 incoming = "https://yokatlas.yok.gov.tr/content/lisans-dynamic/1000_2.php?y="
 last_persons_score = "https://yokatlas.yok.gov.tr/content/lisans-dynamic/1000_3.php?y="
+
+path = "./departments/"
+output_path = "./departments_data/"
+
+deps = dp.get_departments()
 
 
 def control_char(data):
@@ -25,20 +34,28 @@ def control_float(data):
     return data
 
 
-if os.path.isfile("universities.pkl"):
-    df = pd.read_pickle("universities.pkl")
-    uni = df.values.tolist()
+def get_data(dataframe, lbl):
+
+    uni = dataframe.values.tolist()
     uni_count = len(uni)
+
+    # uni_name = dataframe.university_name
+    # uni_language = dataframe.language_of_department
+    # uni_years = dataframe.years_of_department
+    # uni_secondary = dataframe.is_secondary_education
+    # uni_scholarship = dataframe.type_of_scholarship
+    # uni_distance_learning = dataframe.is_distance_learning
+
     analysis = []
 
     i = 0
     while i < uni_count:
         # Prepare URL
-        exist_link = exist + uni[i][2]
-        graduate_link = graduate + uni[i][2]
-        instructor_link = instructor + uni[i][2]
-        incoming_link = incoming + uni[i][2]
-        last_persons_score_link = last_persons_score + uni[i][2]
+        exist_link = exist + uni[i][7]
+        graduate_link = graduate + uni[i][7]
+        instructor_link = instructor + uni[i][7]
+        incoming_link = incoming + uni[i][7]
+        last_persons_score_link = last_persons_score + uni[i][7]
 
         # Download Website
         exist_site = requests.get(exist_link)
@@ -172,8 +189,13 @@ if os.path.isfile("universities.pkl"):
             last_score = 0
 
         result = [uni[i][0],
+                  uni[i][6],
+                  uni[i][7],
                   uni[i][1],
                   uni[i][2],
+                  uni[i][3],
+                  uni[i][4],
+                  uni[i][5],
                   exist_boys,
                   exist_girls,
                   exist_total,
@@ -187,12 +209,17 @@ if os.path.isfile("universities.pkl"):
                   instructor_dr,
                   instructor_total]
         analysis.append(result)
-        print(f"University Left: " + str((uni_count - (i + 1))) + " - " + uni[i][2])
+        print(f"" + lbl + " | University Left: ", str((uni_count - (i + 1))), " - " + uni[i][0])
         i += 1
 
     df = pd.DataFrame(analysis, columns=["university_name",
                                          "university_yok_link",
                                          "university_yok_id",
+                                         "language_of_department",
+                                         "years_of_department",
+                                         "is_secondary_education",
+                                         "type_of_scholarship",
+                                         "is_distance_learning",
                                          "existing_boys",
                                          "existing_girls",
                                          "existing_total",
@@ -205,9 +232,20 @@ if os.path.isfile("universities.pkl"):
                                          "associate_professor",
                                          "doctor",
                                          "total_instructor"])
-    df.to_csv("data.csv")
-    print("CSV Created Successfully")
-    df.to_pickle("data.pkl")
-    print("Pickle File Created Successfully")
-else:
-    print("File does not exists!")
+    df.to_csv(output_path + "data-" + lbl + ".csv")
+    print("CSV Created Successfully: " + output_path)
+    df.to_pickle(output_path + "data-" + lbl + ".pkl")
+    print("Pickle File Created Successfully" + output_path)
+
+
+for label, value in deps.items():
+    full_path = path + label + ".pkl"
+    if os.path.isfile(full_path):
+        df = pd.read_pickle(full_path)
+        get_data(df, label)
+    else:
+        print("File does not exists!")
+
+end_time = time.time()
+execution_time = end_time - start_time
+print("Process Successfully: " + str(execution_time) + " in seconds")
